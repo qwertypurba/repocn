@@ -1,0 +1,48 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <string.h>
+
+void main()
+{
+    char buf1[512], buf2[512];
+    int fd, fd1, p[2], n;
+    int cid;
+    pipe(p);
+    if ((cid = fork()) == -1)
+    {
+        printf("Error while forking");
+        exit(0);
+    }
+    else if (cid > 0)
+    {
+        printf("\nThis is child process....\n");
+
+        close(p[1]); //no need to write here, close write end
+
+        printf("Reading from pipe\n");
+        n = read(p[0], buf1, sizeof buf1);
+
+        printf("Data received: %s\n", buf1);
+
+        printf("Writing to file output.txt...\n");
+        int file1 = open("output.txt", O_WRONLY | O_CREAT, 0644);
+        write(file1, buf1, strlen(buf1));
+    }
+    else
+    {
+        printf("\nThis is parent process\n");
+
+        close(p[0]); //no need to read here, close read end
+
+        printf("Reading from file input.txt\n");
+        int file2 = open("input.txt", O_RDONLY);
+        read(file2, buf2, sizeof buf2);
+
+        printf("Writing to pipe\n");
+        write(p[1], buf2, strlen(buf2));
+    }
+}
